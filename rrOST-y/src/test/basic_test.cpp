@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-030_noair                              */
+/*                             rrOST 0-036_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* basic_test.cpp / 0-030_noair                                               */
+/* basic_test.cpp / 0-036_noair                                               */
 /*----------------------------------------------------------------------------*/
 //
 // Basic initial test.
@@ -220,8 +220,60 @@ int test_basic_2(void)
     
     return sRESULT_SUCCESS;
 }
-    
 
+
+int test_basic_3(void)
+{    
+    printf("Testing basic 3 ...\n");
+
+    s3D u(1.0, 0.0, 0.0);
+    s3D v(0.0, 1.0, 0.0);
+    s3D w;
+
+    u.to_Screen();
+    v.to_Screen();    
+    s3D::calc_CrossProduct(u, v, w);
+
+    w.to_Screen();
+
+    printf("Testing basic 3 ... finished\n");
+    
+    return sRESULT_SUCCESS;
+}
+
+
+int test_basic_4(void)
+{
+    printf("Testing basic 4 ...\n");
+    s3DRobot robot_1;
+
+    robot_1.add_Joint(s3DRobot::Joint::JOINT_ORIENTATION_Y, 0.0);
+    robot_1.add_Link(s3D(0.0, 0.0, 10.0));
+    robot_1.add_Joint(s3DRobot::Joint::JOINT_ORIENTATION_Y, 0.0);
+    robot_1.add_Link(s3D(-2.0, 0.0, 2.0));
+    robot_1.add_Joint(s3DRobot::Joint::JOINT_ORIENTATION_X, 0.0);
+    robot_1.add_Link(s3D(8.0, 0.0, 0.0));
+    robot_1.add_Joint(s3DRobot::Joint::JOINT_ORIENTATION_Y, 0.0);
+    robot_1.add_Link(s3D(0.0, 0.0, -4.0));
+
+    s3D origin_1(0.0, 0.0, 0.0);    
+    s3D end_1;
+      
+    origin_1.to_Screen();
+    
+    for (sInt_32 d = 0; d <= 180; d += 10)
+    {
+	robot_1.Joints[2]->rotation = sDEG_2_RAD(d);
+	robot_1.calc_EndPosition(robot_1.base_joint, origin_1, end_1);	
+	end_1.to_Screen();
+    }
+
+    robot_1.to_Screen();    
+    printf("Testing basic 4 ... finished\n");
+    
+    return sRESULT_SUCCESS;
+}
+   
 
 }  // namespace rrOST
 
@@ -241,11 +293,25 @@ int main(int sUNUSED(argc), const char **sUNUSED(argv))
 	return result;
     }
     */
+    /*
     if (sFAILED(result = test_basic_2()))
     {
 	printf("Test basic 2 failed (error:%d).\n", result);
 	return result;
     }
+    */
+    /*
+    if (sFAILED(result = test_basic_3()))
+    {
+	printf("Test basic 3 failed (error:%d).\n", result);
+	return result;
+    } 
+    */
+    if (sFAILED(result = test_basic_4()))
+    {
+	printf("Test basic 4 failed (error:%d).\n", result);
+	return result;
+    }     
     
     return 0;
 }
