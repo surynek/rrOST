@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-042_noair                              */
+/*                             rrOST 0-044_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* basic_test.cpp / 0-042_noair                                               */
+/* basic_test.cpp / 0-044_noair                                               */
 /*----------------------------------------------------------------------------*/
 //
 // Basic initial test.
@@ -285,6 +285,7 @@ int test_basic_4(void)
     sXYZ xyz_1(s3D(1.0, 0.0, 0.0),
 	       s3D(0.0, 1.0, 0.0),
 	       s3D(0.0, 0.0, 1.0));
+    
     xyz_1.to_Screen();
     xyz_1.rotate_AroundZ(0.1);
     xyz_1.rotate_AroundY(0.2);    
@@ -296,6 +297,7 @@ int test_basic_4(void)
     printf("yaw:%.3f, pitch:%.3f, roll:%.3f\n", yaw, pitch, roll);
 
 //    robot_1.attach_Constraint(robot_1.Joints[3], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, 0.0));
+    robot_1.attach_Constraint(robot_1.Joints[3], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, M_PI / 2));
 
     robot_1.optimize_ConstrainedRobotConfiguration(robot_1.Joints[0], origin_1, position_1);
     robot_1.to_Screen();    
