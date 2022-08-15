@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-038_noair                              */
+/*                             rrOST 0-042_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.h / 0-038_noair                                                      */
+/* robot.h / 0-042_noair                                                      */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -120,6 +120,7 @@ namespace rrOST
     public:
 	s3D calc_XYZ(const s3D &v) const;
 	void calc_XYZ(const s3D &v, s3D &w) const;
+	void calc_PrincipalAxes(sDouble &yaw, sDouble &pitch, sDouble &roll) const;
 	
 	void rotate_AroundX(sDouble rotation);
 	void rotate_AroundX(sDouble rotation, s3D &_Y, s3D &_Z) const;
@@ -309,6 +310,10 @@ namespace rrOST
     class s3DRobot
 	: public sRobot
     {
+    public:
+	const sDouble POSITION_OPTIMIZATION_WEIGHT = 1.0;
+	const sDouble CONSTRAINT_OPTIMIZATION_WEIGHT = 1.0;
+	    
     public:		
 	struct Link
 	{
@@ -333,24 +338,26 @@ namespace rrOST
 
 	struct Constraint
 	{
-	    enum Type
+	    enum Axis
 	    {
-		TYPE_UNDEFINED,
-		TYPE_YAW,
-		TYPE_PITCH,
-		TYPE_ROLL
+		AXIS_UNDEFINED,
+		AXIS_YAW,
+		AXIS_PITCH,
+		AXIS_ROLL
 	    };
 
-	    Constraint(Type _type, sDouble _angle)
-	        : type(_type)
+	    Constraint(Axis _axis, sDouble _angle)
+	        : axis(_axis)
 	        , angle(_angle)
 	    {
 		// nothing
 	    }	    
 
-	    Type type;
+	    Axis axis;
 	    sDouble angle;
-	};	
+	};
+
+	typedef vector<Constraint*> Constraints_vector;
 
 	struct Joint
 	{
@@ -366,7 +373,6 @@ namespace rrOST
 	        : child(NULL)
 		, orientation(_orientation)
 		, rotation(_rotation)
-		, constraint(NULL)
 	    {
 		// nothing
 	    }
@@ -375,9 +381,16 @@ namespace rrOST
 	        : child(_child)
 		, orientation(_orientation)
 		, rotation(_rotation)
-		, constraint(NULL)		
 	    {
 		// nothing
+	    }
+
+	    virtual ~Joint()
+	    {
+		for (Constraints_vector::iterator constraint = Constraints.begin(); constraint != Constraints.end(); ++constraint)
+		{
+		    delete *constraint;
+		}
 	    }
 
 	    Link *child;
@@ -388,7 +401,7 @@ namespace rrOST
 	    Orientation orientation;	    
 	    sDouble rotation;
 	    
-	    Constraint *constraint;
+	    Constraints_vector Constraints;
 	    
 	public:	    
 	    virtual void to_Screen(const sString &indent = "") const;
@@ -440,18 +453,21 @@ namespace rrOST
 	sDouble calc_JointRotationDerivative(Joint *joint, const s3D &origin, const s3D &position);
 	sDouble calc_JointRotation2Derivative(Joint *joint, const s3D &origin, const s3D &position);
 
+	sDouble calc_ConstraintDeviation(void) const;	
+	sDouble calc_ConstraintDeviation(const Joint *joint) const;
+
+	sDouble calc_ConstrainedPositionDifference(const s3D &origin, const s3D &position) const;
+	sDouble calc_ConstrainedJointRotationDerivative(Joint *joint, const s3D &origin, const s3D &position);
+	sDouble calc_ConstrainedJointRotation2Derivative(Joint *joint, const s3D &origin, const s3D &position);		
+
 	bool optimize_JointRotation(Joint *joint, const s3D &origin, const s3D &position);
 	bool optimize_JointRotation(Joint *joint, const s3D &origin, const s3D &position, sDouble &rotation);
 
-        /*
-	bool optimize_JointConstraint(Joint *joint, const s2D &origin, const s2D &position);
-	bool optimize_JointConstraint(Joint *joint, const s2D &origin, const s2D &position, sDouble &rotation);	
-	*/
-	
+	bool optimize_ConstrainedJointRotation(Joint *joint, const s3D &origin, const s3D &position);
+	bool optimize_ConstrainedJointRotation(Joint *joint, const s3D &origin, const s3D &position, sDouble &rotation);	
+
 	bool optimize_RobotConfiguration(Joint *base_joint, const s3D &origin, const s3D &position);
-	/*
-	bool optimize_ConstrainedRobotConfiguration(Joint *base_joint, const s2D &origin, const s2D &position);	
-	*/
+	bool optimize_ConstrainedRobotConfiguration(Joint *base_joint, const s3D &origin, const s3D &position);	
         /*----------------------------------------------------------------*/
 	
 	virtual void to_Screen(const sString &indent = "") const;

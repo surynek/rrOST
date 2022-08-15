@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-038_noair                              */
+/*                             rrOST 0-042_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.cpp / 0-038_noair                                                    */
+/* robot.cpp / 0-042_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -167,6 +167,44 @@ namespace rrOST
 	w.z = v.x * X.z + v.y * Y.z + v.z * Z.z;
     }
 
+
+    void sXYZ::calc_PrincipalAxes(sDouble &yaw, sDouble &pitch, sDouble &roll) const
+    {
+	if (X.x >= s_EPSILON)
+	{
+	    yaw = atan(X.y / X.x);
+	}
+	else
+	{
+	    yaw = M_PI / 2;
+	}
+	sDouble xy_Xlength = sqrt(X.x * X.x + X.y * X.y);
+	
+	if (xy_Xlength >= s_EPSILON)
+	{
+	    pitch = atan(X.z / xy_Xlength);
+	}
+	else
+	{
+	    pitch = M_PI / 2;
+	}
+
+	sDouble ZZ;	
+	sDouble cosp = cos(pitch);
+	
+	if (cosp >= s_EPSILON)
+	{
+	    ZZ = Y.z / cosp;
+	}
+	else
+	{
+	    ZZ = Y.z;
+	}
+	roll = asin(ZZ);
+    }
+
+    
+/*----------------------------------------------------------------------------*/
 
     void sXYZ::rotate_AroundX(sDouble rotation)
     {
@@ -888,7 +926,7 @@ namespace rrOST
     
     void s3DRobot::attach_Constraint(Joint *joint, const Constraint &constraint)
     {
-	joint->constraint = new Constraint(constraint);
+	joint->Constraints.push_back(new Constraint(constraint));
     }
 
     
@@ -1079,7 +1117,7 @@ namespace rrOST
 	}	
     }
 
-    
+
     bool s3DRobot::optimize_JointRotation(Joint *joint, const s3D &origin, const s3D &position, sDouble &rotation)
     {
 	sDouble rotation_save = joint->rotation;
@@ -1117,55 +1155,205 @@ namespace rrOST
 	    return false;
 	}
     }
+    
 
-/*
-    bool s3DRobot::optimize_JointConstraint(Joint *joint, const s2D &origin, const s2D &position)
+    sDouble s3DRobot::calc_ConstraintDeviation(void) const
     {
-	sDouble rotation;
+	return calc_ConstraintDeviation(base_joint);
+    }
+
+    
+    sDouble s3DRobot::calc_ConstraintDeviation(const Joint *joint) const
+    {
+	sDouble deviation = 0.0;
 	
-	if (optimize_JointConstraint(joint, origin, position, rotation))
+	sXYZ xyz = sXYZ(s3D(1.0, 0.0, 0.0),
+			s3D(0.0, 1.0, 0.0),
+			s3D(0.0, 0.0, 1.0));
+	
+	while (joint != NULL)
 	{
-	    joint->rotation = rotation;
+	    switch (joint->orientation)
+	    {
+	    case Joint::ORIENTATION_X:
+	    {
+		xyz.rotate_AroundX(joint->rotation);
+		break;
+	    }
+	    case Joint::ORIENTATION_Y:
+	    {
+		xyz.rotate_AroundY(joint->rotation);		
+		break;
+	    }
+	    case Joint::ORIENTATION_Z:
+	    {
+		xyz.rotate_AroundZ(joint->rotation);		
+		break;
+	    }
+	    default:
+	    {
+		sASSERT(false);
+		break;
+	    }
+	    }
+	    if (!joint->Constraints.empty())
+	    {
+		sDouble yaw, pitch, roll;	    
+		xyz.calc_PrincipalAxes(yaw, pitch, roll);
+
+		for (Constraints_vector::const_iterator constraint = joint->Constraints.begin(); constraint != joint->Constraints.end(); ++constraint)
+		{
+		    sDouble diff;
+		    
+		    switch ((*constraint)->axis)
+		    {
+		    case Constraint::AXIS_YAW:
+		    {
+			diff = sABS((*constraint)->angle - yaw);
+			break;
+		    }
+		    case Constraint::AXIS_PITCH:
+		    {
+			diff = sABS((*constraint)->angle - pitch);
+			break;			
+		    }
+		    case Constraint::AXIS_ROLL:
+		    {
+			diff = sABS((*constraint)->angle - roll);
+			break;			
+		    }
+		    default:
+		    {
+			sASSERT(false);
+			break;
+		    }
+		    }
+		    deviation += diff * diff;
+		}
+	    }
+	    
+	    joint = joint->next;
+	}
+
+	return deviation;
+    }
+
+
+    sDouble s3DRobot::calc_ConstrainedPositionDifference(const s3D &origin, const s3D &position) const
+    {
+	sDouble pos_diff = calc_PositionDifference(origin, position);
+	sDouble deviation = calc_ConstraintDeviation();
+
+	return (POSITION_OPTIMIZATION_WEIGHT * pos_diff + CONSTRAINT_OPTIMIZATION_WEIGHT * deviation);
+    }
+
+    
+    sDouble s3DRobot::calc_ConstrainedJointRotationDerivative(Joint *joint, const s3D &origin, const s3D &position)
+    {
+	sDouble rotation_save = joint->rotation;
+	
+	sDouble pos_diff1 = calc_ConstrainedPositionDifference(origin, position);
+	joint->rotation += s_DELTION;
+	sDouble pos_diff2 = calc_ConstrainedPositionDifference(origin, position);
+	joint->rotation = rotation_save;
+
+	//printf("pos diffs: %f, %f\n", pos_diff1, pos_diff2);
+
+	return ((pos_diff2 - pos_diff1) / s_DELTION);
+    }
+
+    
+    sDouble s3DRobot::calc_ConstrainedJointRotation2Derivative(Joint *joint, const s3D &origin, const s3D &position)
+    {
+	sDouble rotation_save = joint->rotation;
+	
+	sDouble pos_diff_derivative1 = calc_ConstrainedJointRotationDerivative(joint, origin, position);
+	joint->rotation += s_DELTION;
+	sDouble pos_diff_derivative2 = calc_ConstrainedJointRotationDerivative(joint, origin, position);
+	joint->rotation = rotation_save;
+
+	//printf("pos diffs 2: %f, %f\n", pos_diff_derivative1, pos_diff_derivative2);
+
+	return ((pos_diff_derivative2 - pos_diff_derivative1) / s_DELTION);
+    }
+
+
+    bool s3DRobot::optimize_ConstrainedJointRotation(Joint *joint, const s3D &origin, const s3D &position)
+    {
+	sDouble drot, ddrot;
+	
+	for (sInt_32 i = 0; i < MAX_OPTIMIZATION_ITERATIONS; ++i)
+	{
+	    drot = calc_ConstrainedJointRotationDerivative(joint, origin, position);
+	    ddrot = calc_ConstrainedJointRotation2Derivative(joint, origin, position);
+
+	    printf("%.10f,%.3f,%d <-- %f\n", drot, ddrot, i, joint->rotation);
+	    
+	    if (sABS(drot) > s_PRECISION)
+	    {
+		joint->rotation = joint->rotation - (drot / ddrot);		
+	    }
+	    else
+	    {
+		break;
+	    }
+	}
+	joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));	
+
+	if (sABS(drot) <= s_PRECISION)
+	{
+	    s3D end;
+	    calc_EndPosition(origin, end);
+	    printf("Optimum found: %.3f\n", joint->rotation);
+	    end.to_Screen();
 	    return true;
 	}
 	else
 	{
+	    printf("Failed to find optimum (joint rot).\n");	    
 	    return false;
-	}
+	}	
     }
 
-    
-    bool s3DRobot::optimize_JointConstraint(Joint *joint, const s2D &sUNUSED(origin), const s2D &sUNUSED(position), sDouble &rotation)
+
+    bool s3DRobot::optimize_ConstrainedJointRotation(Joint *joint, const s3D &origin, const s3D &position, sDouble &rotation)
     {
-	switch (joint->constraint->type)
-	{
-	case Constraint::TYPE_ANGULAR:
-	{
-	    Joint *_joint = base_joint;
-	    sDouble _rotation = 0.0;
+	sDouble rotation_save = joint->rotation;
+	sDouble drot, ddrot;
 	
-	    while (_joint != NULL)
+	for (sInt_32 i = 0; i < MAX_OPTIMIZATION_ITERATIONS; ++i)
+	{
+	    drot = calc_ConstrainedJointRotationDerivative(joint, origin, position);
+	    ddrot = calc_ConstrainedJointRotation2Derivative(joint, origin, position);
+
+	    printf("%.3f,%.3f,%d <-- %f\n", drot, ddrot, i, joint->rotation);
+	    
+	    if (sABS(drot) > s_PRECISION)
 	    {
-		if (_joint == joint)
-		{
-		    rotation = joint->constraint->angle - _rotation;
-		    rotation -= sSGN(rotation) * 2 * M_PI * floor(rotation / (2 * M_PI));
-		    printf("constraint rotation:%.3f\n", rotation);
-		    break;
-		}
-		_rotation += _joint->rotation;	    
-		_joint = _joint->next;
+		joint->rotation = joint->rotation - (drot / ddrot);		
 	    }
+	    else
+	    {
+		break;
+	    }
+	}
+	joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));
+	rotation = joint->rotation;
+	
+	joint->rotation = rotation_save;
+
+	if (sABS(drot) <= s_PRECISION)
+	{
+	    printf("Optimum found: %.3f\n", rotation);
 	    return true;
 	}
-	default:
+	else
 	{
-	    break;
+	    printf("Failed to find optimum.\n");
+	    return false;
 	}
-	}
-	return false;
-    }
-*/
+    }    
+    
 
     bool s3DRobot::optimize_RobotConfiguration(Joint *base_joint, const s3D &origin, const s3D &position)
     {
@@ -1208,55 +1396,49 @@ namespace rrOST
 	return false;
     }
 
-/*
-    bool s3DRobot::optimize_ConstrainedRobotConfiguration(Joint *base_joint, const s2D &origin, const s2D &position)
+
+    bool s3DRobot::optimize_ConstrainedRobotConfiguration(Joint *base_joint, const s3D &origin, const s3D &position)
     {
 	Configuration configuration;
 	save_RobotConfiguration(configuration);
-	    
+	
 	for (sInt_32 r = 0; r < MAX_OPTIMIZATION_RESTARTS; ++r)
 	{
 	    randomize_RobotConfiguration();
-		
+	
 	    for (sInt_32 i = 0; i < MAX_OPTIMIZATION_ITERATIONS; ++i)
 	    {
 		Joint *joint = base_joint;
-
+		
 		while (joint != NULL)
 		{
-		    if (joint->constraint != NULL)
+		    if (!optimize_ConstrainedJointRotation(joint, origin, position))
 		    {
-			if (!optimize_JointConstraint(joint, origin, position))
-			{
-			    restore_RobotConfiguration(configuration);
-			    return false;
-			}		    
+			restore_RobotConfiguration(configuration);
+			return false;
 		    }
-		    else
-		    {
-			if (!optimize_JointRotation(joint, origin, position))
-			{
-			    restore_RobotConfiguration(configuration);			    
-			    return false;
-			}
-		    }
-		    joint = joint->next;		
+		    joint = joint->next;
 		}
 		sDouble diff = calc_PositionDifference(origin, position);
-		printf("Diff:%.10f,%.10f\n", diff, s_EPSILON);
+		sDouble devi = calc_ConstraintDeviation();
+		printf("Diff:%.10f, devi:%.10f\n", diff, devi);
 	    
 		if (diff < s_PRECISION)
 		{
+		    s3D final_end;
+		    calc_EndPosition(base_joint, origin, final_end);
+		    printf("Final end position:\n");
+		    final_end.to_Screen();		    
 		    printf("Optimal configuration found.\n");
 		    return true;
 		}
 	    }
 	}
-	restore_RobotConfiguration(configuration);	
+	restore_RobotConfiguration(configuration);
 	printf("Failed to optimize configuration.\n");	
 	return false;
     }    
-*/
+
 
 /*----------------------------------------------------------------------------*/
     
