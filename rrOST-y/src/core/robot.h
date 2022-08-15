@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-036_noair                              */
+/*                             rrOST 0-038_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.h / 0-036_noair                                                      */
+/* robot.h / 0-038_noair                                                      */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -336,28 +336,30 @@ namespace rrOST
 	    enum Type
 	    {
 		TYPE_UNDEFINED,
-		TYPE_ANGULAR
+		TYPE_YAW,
+		TYPE_PITCH,
+		TYPE_ROLL
 	    };
 
-	    Constraint(sDouble _angle)
-	        : type(TYPE_ANGULAR)
+	    Constraint(Type _type, sDouble _angle)
+	        : type(_type)
 	        , angle(_angle)
 	    {
 		// nothing
-	    }
+	    }	    
 
 	    Type type;
 	    sDouble angle;
-	};
+	};	
 
 	struct Joint
 	{
 	    enum Orientation
 	    {
-		JOINT_ORIENTATION_UNDEFINED,
-		JOINT_ORIENTATION_X,
-		JOINT_ORIENTATION_Y,
-		JOINT_ORIENTATION_Z
+		ORIENTATION_UNDEFINED,
+		ORIENTATION_X,
+		ORIENTATION_Y,
+		ORIENTATION_Z
 	    };
 	   
 	    Joint(Orientation _orientation, sDouble _rotation)
@@ -438,14 +440,16 @@ namespace rrOST
 	sDouble calc_JointRotationDerivative(Joint *joint, const s3D &origin, const s3D &position);
 	sDouble calc_JointRotation2Derivative(Joint *joint, const s3D &origin, const s3D &position);
 
-        /*
-	bool optimize_JointRotation(Joint *joint, const s2D &origin, const s2D &position);
-	bool optimize_JointRotation(Joint *joint, const s2D &origin, const s2D &position, sDouble &rotation);
+	bool optimize_JointRotation(Joint *joint, const s3D &origin, const s3D &position);
+	bool optimize_JointRotation(Joint *joint, const s3D &origin, const s3D &position, sDouble &rotation);
 
+        /*
 	bool optimize_JointConstraint(Joint *joint, const s2D &origin, const s2D &position);
 	bool optimize_JointConstraint(Joint *joint, const s2D &origin, const s2D &position, sDouble &rotation);	
+	*/
 	
-	bool optimize_RobotConfiguration(Joint *base_joint, const s2D &origin, const s2D &position);
+	bool optimize_RobotConfiguration(Joint *base_joint, const s3D &origin, const s3D &position);
+	/*
 	bool optimize_ConstrainedRobotConfiguration(Joint *base_joint, const s2D &origin, const s2D &position);	
 	*/
         /*----------------------------------------------------------------*/

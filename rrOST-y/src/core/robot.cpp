@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-036_noair                              */
+/*                             rrOST 0-038_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.cpp / 0-036_noair                                                    */
+/* robot.cpp / 0-038_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -771,7 +771,36 @@ namespace rrOST
     
     void s3DRobot::Joint::to_Stream(FILE *fw, const sString &indent) const
     {
-	fprintf(fw, "%sJoint: (rotation = %.3f)\n", indent.c_str(), rotation);
+	sString orientation_text;
+
+	switch (orientation)
+	{
+	case ORIENTATION_UNDEFINED:
+	{
+	    orientation_text = "undefined";
+	    break;
+	}
+	case ORIENTATION_X:
+	{
+	    orientation_text = "X axis";
+	    break;
+	}
+	case ORIENTATION_Y:
+	{
+	    orientation_text = "Y axis";	    
+	    break;
+	}
+	case ORIENTATION_Z:
+	{
+	    orientation_text = "Z axis";
+	    break;
+	}
+	default:
+	{
+	    break;
+	}
+	}
+	fprintf(fw, "%sJoint: (orientation = %s, rotation = %.3f)\n", indent.c_str(), orientation_text.c_str(), rotation);
     }
 
 
@@ -935,17 +964,17 @@ namespace rrOST
 	{
 	    switch (joint->orientation)
 	    {
-	    case Joint::JOINT_ORIENTATION_X:
+	    case Joint::ORIENTATION_X:
 	    {
 		xyz.rotate_AroundX(joint->rotation);
 		break;
 	    }
-	    case Joint::JOINT_ORIENTATION_Y:
+	    case Joint::ORIENTATION_Y:
 	    {
 		xyz.rotate_AroundY(joint->rotation);		
 		break;
 	    }
-	    case Joint::JOINT_ORIENTATION_Z:
+	    case Joint::ORIENTATION_Z:
 	    {
 		xyz.rotate_AroundZ(joint->rotation);		
 		break;
@@ -977,8 +1006,9 @@ namespace rrOST
 
 	sDouble dx = end.x - position.x;
 	sDouble dy = end.y - position.y;
+	sDouble dz = end.z - position.z;	
 
-	return (dx * dx + dy * dy);
+	return (dx * dx + dy * dy + dz * dz);
     }
 
     
@@ -1011,8 +1041,8 @@ namespace rrOST
 	return ((pos_diff_derivative2 - pos_diff_derivative1) / s_DELTION);
     }
 
-/*
-    bool s3DRobot::optimize_JointRotation(Joint *joint, const s2D &origin, const s2D &position)
+
+    bool s3DRobot::optimize_JointRotation(Joint *joint, const s3D &origin, const s3D &position)
     {
 	sDouble drot, ddrot;
 	
@@ -1036,7 +1066,7 @@ namespace rrOST
 
 	if (sABS(drot) <= s_PRECISION)
 	{
-	    s2D end;
+	    s3D end;
 	    calc_EndPosition(origin, end);
 	    printf("Optimum found: %.3f\n", joint->rotation);
 	    end.to_Screen();
@@ -1050,7 +1080,7 @@ namespace rrOST
     }
 
     
-    bool s3DRobot::optimize_JointRotation(Joint *joint, const s2D &origin, const s2D &position, sDouble &rotation)
+    bool s3DRobot::optimize_JointRotation(Joint *joint, const s3D &origin, const s3D &position, sDouble &rotation)
     {
 	sDouble rotation_save = joint->rotation;
 	sDouble drot, ddrot;
@@ -1088,7 +1118,7 @@ namespace rrOST
 	}
     }
 
-
+/*
     bool s3DRobot::optimize_JointConstraint(Joint *joint, const s2D &origin, const s2D &position)
     {
 	sDouble rotation;
@@ -1135,9 +1165,9 @@ namespace rrOST
 	}
 	return false;
     }
+*/
 
-
-    bool s3DRobot::optimize_RobotConfiguration(Joint *base_joint, const s2D &origin, const s2D &position)
+    bool s3DRobot::optimize_RobotConfiguration(Joint *base_joint, const s3D &origin, const s3D &position)
     {
 	Configuration configuration;
 	save_RobotConfiguration(configuration);
@@ -1164,6 +1194,10 @@ namespace rrOST
 	    
 		if (diff < s_PRECISION)
 		{
+		    s3D final_end;
+		    calc_EndPosition(base_joint, origin, final_end);
+		    printf("Final end position:\n");
+		    final_end.to_Screen();
 		    printf("Optimal configuration found.\n");
 		    return true;
 		}
@@ -1174,7 +1208,7 @@ namespace rrOST
 	return false;
     }
 
-
+/*
     bool s3DRobot::optimize_ConstrainedRobotConfiguration(Joint *base_joint, const s2D &origin, const s2D &position)
     {
 	Configuration configuration;

@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-036_noair                              */
+/*                             rrOST 0-038_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* basic_test.cpp / 0-036_noair                                               */
+/* basic_test.cpp / 0-038_noair                                               */
 /*----------------------------------------------------------------------------*/
 //
 // Basic initial test.
@@ -247,16 +247,17 @@ int test_basic_4(void)
     printf("Testing basic 4 ...\n");
     s3DRobot robot_1;
 
-    robot_1.add_Joint(s3DRobot::Joint::JOINT_ORIENTATION_Y, 0.0);
+    robot_1.add_Joint(s3DRobot::Joint::ORIENTATION_Y, 0.0);
     robot_1.add_Link(s3D(0.0, 0.0, 10.0));
-    robot_1.add_Joint(s3DRobot::Joint::JOINT_ORIENTATION_Y, 0.0);
+    robot_1.add_Joint(s3DRobot::Joint::ORIENTATION_Y, 0.0);
     robot_1.add_Link(s3D(-2.0, 0.0, 2.0));
-    robot_1.add_Joint(s3DRobot::Joint::JOINT_ORIENTATION_X, 0.0);
+    robot_1.add_Joint(s3DRobot::Joint::ORIENTATION_X, 0.0);
     robot_1.add_Link(s3D(8.0, 0.0, 0.0));
-    robot_1.add_Joint(s3DRobot::Joint::JOINT_ORIENTATION_Y, 0.0);
+    robot_1.add_Joint(s3DRobot::Joint::ORIENTATION_Y, 0.0);
     robot_1.add_Link(s3D(0.0, 0.0, -4.0));
 
-    s3D origin_1(0.0, 0.0, 0.0);    
+    s3D origin_1(0.0, 0.0, 0.0);
+    s3D position_1(2.0, 1.0, 10.0);
     s3D end_1;
       
     origin_1.to_Screen();
@@ -268,7 +269,17 @@ int test_basic_4(void)
 	end_1.to_Screen();
     }
 
-    robot_1.to_Screen();    
+    robot_1.to_Screen();
+
+    printf("Optimizing...\n");
+    sDouble rotation_1;    
+    robot_1.optimize_JointRotation(robot_1.Joints[1], origin_1, position_1, rotation_1);
+    
+    printf("Optimized rotation: %.3f\n", rotation_1);
+
+    robot_1.optimize_RobotConfiguration(robot_1.Joints[0], origin_1, position_1);
+    robot_1.to_Screen();
+    
     printf("Testing basic 4 ... finished\n");
     
     return sRESULT_SUCCESS;
