@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-044_noair                              */
+/*                             rrOST 0-045_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.cpp / 0-044_noair                                                    */
+/* robot.cpp / 0-045_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -801,6 +801,64 @@ namespace rrOST
 
 /*----------------------------------------------------------------------------*/
     
+    void s3DRobot::Constraint::to_Screen(const sString &indent) const
+    {
+	to_Stream(stdout, indent);
+    }
+
+    
+    void s3DRobot::Constraint::to_Stream(FILE *fw, const sString &indent) const
+    {
+	sString axis_text;
+
+	switch (axis)
+	{
+	case AXIS_UNDEFINED:
+	{
+	    axis_text = "undefined";
+	    break;
+	}
+	case AXIS_YAW:
+	{
+	    axis_text = "yaw";	    
+	    break;	    
+	}
+	case AXIS_PITCH:
+	{
+	    axis_text = "pitch";	    
+	    break;	    
+	}
+	case AXIS_ROLL:
+	{
+	    axis_text = "roll";	    
+	    break;
+	}
+	default:
+	{
+	    sASSERT(false);
+	}
+	}
+	
+	fprintf(fw, "%sConstraint: (axix = %s, angle = %.3f)\n", indent.c_str(), axis_text.c_str(), angle);
+    }
+
+
+/*----------------------------------------------------------------------------*/
+    
+    void s3DRobot::Limiter::to_Screen(const sString &indent) const
+    {
+	to_Stream(stdout, indent);
+    }
+
+    
+    void s3DRobot::Limiter::to_Stream(FILE *fw, const sString &indent) const
+    {
+	fprintf(fw, "%sLimiter: (rotation_low = %.3f, rotation_high = %.3f)\n", indent.c_str(), rotation_low, rotation_high);	
+    }
+
+
+/*----------------------------------------------------------------------------*/
+    
     void s3DRobot::Joint::to_Screen(const sString &indent) const
     {
 	to_Stream(stdout, indent);
@@ -839,6 +897,18 @@ namespace rrOST
 	}
 	}
 	fprintf(fw, "%sJoint: (orientation = %s, rotation = %.3f)\n", indent.c_str(), orientation_text.c_str(), rotation);
+	
+	fprintf(fw, "%s%sLimiters\n", indent.c_str(), s_INDENT.c_str());
+	for (Limiters_vector::const_iterator limiter = Limiters.begin(); limiter != Limiters.end(); ++limiter)
+	{
+	    (*limiter)->to_Stream(fw, indent + s2_INDENT);
+	}
+
+	fprintf(fw, "%s%sConstraints\n", indent.c_str(), s_INDENT.c_str());
+	for (Constraints_vector::const_iterator constraint = Constraints.begin(); constraint != Constraints.end(); ++constraint)
+	{
+	    (*constraint)->to_Stream(fw, indent + s2_INDENT);
+	}	
     }
 
 
@@ -1159,6 +1229,7 @@ namespace rrOST
 
     sDouble s3DRobot::calc_ConstraintDeviation(void) const
     {
+	sASSERT(base_joint != NULL);	
 	return calc_ConstraintDeviation(base_joint);
     }
 
@@ -1238,13 +1309,50 @@ namespace rrOST
 	return deviation;
     }
 
+    
+    sDouble s3DRobot::calc_LimiterViolation(void) const
+    {
+	sASSERT(base_joint != NULL);
+	
+	return calc_LimiterViolation(base_joint);
+    }
+
+    
+    sDouble s3DRobot::calc_LimiterViolation(const Joint *joint) const
+    {
+	sDouble violation = 0.0;
+	
+	while (joint != NULL)
+	{	
+	    for (Limiters_vector::const_iterator limiter = joint->Limiters.begin(); limiter != joint->Limiters.end(); ++limiter)
+	    {
+		if (joint->rotation > (*limiter)->rotation_high)
+		{
+		    violation += exp(sABS(joint->rotation - (*limiter)->rotation_high));
+		}
+		else
+		{
+		    if (joint->rotation < (*limiter)->rotation_low)
+		    {
+			violation += exp(sABS(joint->rotation - (*limiter)->rotation_low));
+		    }
+		}
+	    }
+	    joint = joint->next;
+	}
+	return violation;
+    }
+
 
     sDouble s3DRobot::calc_ConstrainedPositionDifference(const s3D &origin, const s3D &position) const
     {
 	sDouble pos_diff = calc_PositionDifference(origin, position);
 	sDouble deviation = calc_ConstraintDeviation();
+	sDouble violation =  calc_LimiterViolation();
 
-	return (POSITION_OPTIMIZATION_WEIGHT * pos_diff + CONSTRAINT_OPTIMIZATION_WEIGHT * deviation);
+	return (  POSITION_OPTIMIZATION_WEIGHT * pos_diff
+		+ CONSTRAINT_OPTIMIZATION_WEIGHT * deviation
+		+ LIMITER_OPTIMIZATION_WEIGHT * violation);
     }
 
     

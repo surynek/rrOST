@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-044_noair                              */
+/*                             rrOST 0-045_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* statistics.h / 0-044_noair                                                 */
+/* statistics.h / 0-045_noair                                                 */
 /*----------------------------------------------------------------------------*/
 //
 // Statistical data collection and analytical tools.

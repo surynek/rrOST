@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-044_noair                              */
+/*                             rrOST 0-045_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.h / 0-044_noair                                                      */
+/* robot.h / 0-045_noair                                                      */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -311,8 +311,9 @@ namespace rrOST
 	: public sRobot
     {
     public:
-	const sDouble POSITION_OPTIMIZATION_WEIGHT = 1.0;
+	const sDouble POSITION_OPTIMIZATION_WEIGHT   = 1.0;
 	const sDouble CONSTRAINT_OPTIMIZATION_WEIGHT = 1.0;
+	const sDouble LIMITER_OPTIMIZATION_WEIGHT    = 8.0;
 	    
     public:		
 	struct Link
@@ -351,13 +352,35 @@ namespace rrOST
 	        , angle(_angle)
 	    {
 		// nothing
-	    }	    
+	    }
 
 	    Axis axis;
 	    sDouble angle;
+
+	public:	    
+	    virtual void to_Screen(const sString &indent = "") const;
+	    virtual void to_Stream(FILE *fw, const sString &indent = "") const;		    	    
+	};
+
+	struct Limiter
+	{
+	    Limiter(sDouble _rotation_low, sDouble _rotation_high)
+	        : rotation_low(_rotation_low)
+	        , rotation_high(_rotation_high)
+	    {
+		// nothing
+	    }
+	    
+	    sDouble rotation_low;
+	    sDouble rotation_high;
+
+	public:
+	    virtual void to_Screen(const sString &indent = "") const;
+	    virtual void to_Stream(FILE *fw, const sString &indent = "") const;	    
 	};
 
 	typedef vector<Constraint*> Constraints_vector;
+	typedef vector<Limiter*> Limiters_vector;	
 
 	struct Joint
 	{
@@ -387,6 +410,11 @@ namespace rrOST
 
 	    virtual ~Joint()
 	    {
+		for (Limiters_vector::iterator limiter = Limiters.begin(); limiter != Limiters.end(); ++limiter)
+		{
+		    delete *limiter;
+		}
+		
 		for (Constraints_vector::iterator constraint = Constraints.begin(); constraint != Constraints.end(); ++constraint)
 		{
 		    delete *constraint;
@@ -400,7 +428,8 @@ namespace rrOST
 
 	    Orientation orientation;	    
 	    sDouble rotation;
-	    
+
+	    Limiters_vector Limiters;
 	    Constraints_vector Constraints;
 	    
 	public:	    
@@ -455,6 +484,9 @@ namespace rrOST
 
 	sDouble calc_ConstraintDeviation(void) const;	
 	sDouble calc_ConstraintDeviation(const Joint *joint) const;
+
+	sDouble calc_LimiterViolation(void) const;
+	sDouble calc_LimiterViolation(const Joint *joint) const;
 
 	sDouble calc_ConstrainedPositionDifference(const s3D &origin, const s3D &position) const;
 	sDouble calc_ConstrainedJointRotationDerivative(Joint *joint, const s3D &origin, const s3D &position);
