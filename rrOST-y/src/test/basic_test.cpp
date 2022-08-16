@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-047_noair                              */
+/*                             rrOST 0-050_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* basic_test.cpp / 0-047_noair                                               */
+/* basic_test.cpp / 0-050_noair                                               */
 /*----------------------------------------------------------------------------*/
 //
 // Basic initial test.
@@ -298,6 +298,11 @@ int test_basic_4(void)
 
 //    robot_1.attach_Constraint(robot_1.Joints[3], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, 0.0));
     robot_1.attach_Constraint(robot_1.Joints[3], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, M_PI / 2));
+
+    robot_1.attach_Limiter(robot_1.Joints[0], s3DRobot::Limiter(-0.4 * M_PI, 0.4 * M_PI));
+    robot_1.attach_Limiter(robot_1.Joints[1], s3DRobot::Limiter(-0.5 * M_PI, 0.5 * M_PI));
+    robot_1.attach_Limiter(robot_1.Joints[2], s3DRobot::Limiter(-0.5 * M_PI, 0.5 * M_PI));
+    robot_1.attach_Limiter(robot_1.Joints[3], s3DRobot::Limiter(-0.5 * M_PI, 0.5 * M_PI));
 
     robot_1.optimize_ConstrainedRobotConfiguration(robot_1.Joints[0], origin_1, position_1);
     robot_1.to_Screen();    

@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-047_noair                              */
+/*                             rrOST 0-050_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* motion_plan_main.cpp / 0-047_noair                                         */
+/* motion_plan_main.cpp / 0-050_noair                                         */
 /*----------------------------------------------------------------------------*/
 //
 // Robot Motion Planning - main program.

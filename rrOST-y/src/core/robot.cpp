@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-047_noair                              */
+/*                             rrOST 0-050_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.cpp / 0-047_noair                                                    */
+/* robot.cpp / 0-050_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -815,22 +815,22 @@ namespace rrOST
 	{
 	case AXIS_UNDEFINED:
 	{
-	    axis_text = "undefined";
+	    axis_text = "\"undefined\"";
 	    break;
 	}
 	case AXIS_YAW:
 	{
-	    axis_text = "yaw";	    
+	    axis_text = "\"yaw\"";	    
 	    break;	    
 	}
 	case AXIS_PITCH:
 	{
-	    axis_text = "pitch";	    
+	    axis_text = "\"pitch\"";	    
 	    break;	    
 	}
 	case AXIS_ROLL:
 	{
-	    axis_text = "roll";	    
+	    axis_text = "\"roll\"";
 	    break;
 	}
 	default:
@@ -839,7 +839,7 @@ namespace rrOST
 	}
 	}
 	
-	fprintf(fw, "%sConstraint: (axix = %s, angle = %.3f)\n", indent.c_str(), axis_text.c_str(), angle);
+	fprintf(fw, "%s(axis = %s, angle = %.3f)\n", indent.c_str(), axis_text.c_str(), angle);
     }
 
 
@@ -853,7 +853,7 @@ namespace rrOST
     
     void s3DRobot::Limiter::to_Stream(FILE *fw, const sString &indent) const
     {
-	fprintf(fw, "%sLimiter: (rotation_low = %.3f, rotation_high = %.3f)\n", indent.c_str(), rotation_low, rotation_high);	
+	fprintf(fw, "%s(-rot = %.3f, +rot = %.3f)\n", indent.c_str(), rotation_low, rotation_high);	
     }
 
 
@@ -873,22 +873,22 @@ namespace rrOST
 	{
 	case ORIENTATION_UNDEFINED:
 	{
-	    orientation_text = "undefined";
+	    orientation_text = "\"undefined\"";
 	    break;
 	}
 	case ORIENTATION_X:
 	{
-	    orientation_text = "X axis";
+	    orientation_text = "\"X axis\"";
 	    break;
 	}
 	case ORIENTATION_Y:
 	{
-	    orientation_text = "Y axis";	    
+	    orientation_text = "\"Y axis\"";	    
 	    break;
 	}
 	case ORIENTATION_Z:
 	{
-	    orientation_text = "Z axis";
+	    orientation_text = "\"Z axis\"";
 	    break;
 	}
 	default:
@@ -897,18 +897,23 @@ namespace rrOST
 	}
 	}
 	fprintf(fw, "%sJoint: (orientation = %s, rotation = %.3f)\n", indent.c_str(), orientation_text.c_str(), rotation);
-	
-	fprintf(fw, "%s%sLimiters\n", indent.c_str(), s_INDENT.c_str());
-	for (Limiters_vector::const_iterator limiter = Limiters.begin(); limiter != Limiters.end(); ++limiter)
-	{
-	    (*limiter)->to_Stream(fw, indent + s2_INDENT);
-	}
 
-	fprintf(fw, "%s%sConstraints\n", indent.c_str(), s_INDENT.c_str());
-	for (Constraints_vector::const_iterator constraint = Constraints.begin(); constraint != Constraints.end(); ++constraint)
+	if (!Limiters.empty())
 	{
-	    (*constraint)->to_Stream(fw, indent + s2_INDENT);
-	}	
+	    fprintf(fw, "%s%sLimiters\n", indent.c_str(), s_INDENT.c_str());
+	    for (Limiters_vector::const_iterator limiter = Limiters.begin(); limiter != Limiters.end(); ++limiter)
+	    {
+		(*limiter)->to_Stream(fw, indent + s2_INDENT);
+	    }
+	}
+	if (!Constraints.empty())
+	{
+	    fprintf(fw, "%s%sConstraints\n", indent.c_str(), s_INDENT.c_str());
+	    for (Constraints_vector::const_iterator constraint = Constraints.begin(); constraint != Constraints.end(); ++constraint)
+	    {
+		(*constraint)->to_Stream(fw, indent + s2_INDENT);
+	    }
+	}
     }
 
 
@@ -993,6 +998,12 @@ namespace rrOST
 	Joints[last]->child = link;	
     }
 
+
+    void s3DRobot::attach_Limiter(Joint *joint, const Limiter &limiter)
+    {
+	joint->Limiters.push_back(new Limiter(limiter));
+    }
+
     
     void s3DRobot::attach_Constraint(Joint *joint, const Constraint &constraint)
     {
@@ -1044,6 +1055,27 @@ namespace rrOST
 	    joint = joint->next;
 	}
     }
+
+
+    void s3DRobot::randomize_LimitedRobotConfiguration(void)
+    {	
+	Joint *joint = base_joint;
+
+	while (joint != NULL)
+	{
+	    if (!joint->Limiters.empty())
+	    {
+		sASSERT(joint->Limiters.size() == 1);
+
+		joint->rotation = joint->Limiters[0]->rotation_low + (joint->Limiters[0]->rotation_high - joint->Limiters[0]->rotation_low) *  (rand() / (sDouble)RAND_MAX);		
+	    }
+	    else
+	    {
+		joint->rotation = 2 * M_PI * (rand() / (sDouble)RAND_MAX);
+	    }
+	    joint = joint->next;
+	}
+    }    
 	
 
 /*----------------------------------------------------------------------------*/
@@ -1406,7 +1438,7 @@ namespace rrOST
 		break;
 	    }
 	}
-	joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));	
+	//joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));	
 
 	if (sABS(drot) <= s_PRECISION)
 	{
@@ -1445,7 +1477,7 @@ namespace rrOST
 		break;
 	    }
 	}
-	joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));
+	//joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));
 	rotation = joint->rotation;
 	
 	joint->rotation = rotation_save;
@@ -1512,7 +1544,7 @@ namespace rrOST
 	
 	for (sInt_32 r = 0; r < MAX_OPTIMIZATION_RESTARTS; ++r)
 	{
-	    randomize_RobotConfiguration();
+	    randomize_LimitedRobotConfiguration();
 	
 	    for (sInt_32 i = 0; i < MAX_OPTIMIZATION_ITERATIONS; ++i)
 	    {

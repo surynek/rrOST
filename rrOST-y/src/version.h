@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-047_noair                              */
+/*                             rrOST 0-050_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* version.h / 0-047_noair                                                    */
+/* version.h / 0-050_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Version file for rrOST
@@ -27,8 +27,8 @@ using namespace rrOST;
 namespace rrOST
 {
 
-#define sVERSION "0-047_noair"
-#define sPRODUCT "rrOST 0-047_noair"
+#define sVERSION "0-050_noair"
+#define sPRODUCT "rrOST 0-050_noair"
 #define sAUTHOR "Pavel Surynek"
 #define sAUTHOR_LONG "Pavel Surynek <pavel@surynek.net>"
 #define sCOPYRIGHT "(C) Copyright 2021 - 2022 Pavel Surynek"

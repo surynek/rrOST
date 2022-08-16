@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-047_noair                              */
+/*                             rrOST 0-050_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.h / 0-047_noair                                                      */
+/* robot.h / 0-050_noair                                                      */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -467,12 +467,15 @@ namespace rrOST
 	void add_Link(s3D end);
 	void add_Link(sDouble length);
 
+	void attach_Limiter(Joint *joint, const Limiter &limiter);		
 	void attach_Constraint(Joint *joint, const Constraint &constraint);
         /*----------------------------------------------------------------*/
 
 	void save_RobotConfiguration(Configuration &configuration) const;
 	void restore_RobotConfiguration(const Configuration &configuration);
-	void randomize_RobotConfiguration(void);	
+	
+	void randomize_RobotConfiguration(void);
+	void randomize_LimitedRobotConfiguration(void);		
         /*----------------------------------------------------------------*/	
 
 	void calc_EndPosition(const s3D &origin, s3D &end) const;
