@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-050_noair                              */
+/*                             rrOST 0-051_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* basic_test.cpp / 0-050_noair                                               */
+/* basic_test.cpp / 0-051_noair                                               */
 /*----------------------------------------------------------------------------*/
 //
 // Basic initial test.
@@ -311,6 +311,77 @@ int test_basic_4(void)
     
     return sRESULT_SUCCESS;
 }
+
+
+int test_basic_5_RR1_rev1(void)
+{
+    printf("Testing basic 5 ...\n");
+    s3DRobot robot_1;
+
+    robot_1.add_Joint(s3DRobot::Joint::ORIENTATION_Y, 0.0);
+    robot_1.add_Link(s3D(0.0, 0.0, 10.0));
+    robot_1.add_Joint(s3DRobot::Joint::ORIENTATION_Y, 0.0);
+    robot_1.add_Link(s3D(-2.0, 0.0, 2.0));
+    robot_1.add_Joint(s3DRobot::Joint::ORIENTATION_X, 0.0);
+    robot_1.add_Link(s3D(8.0, 0.0, 0.0));
+    robot_1.add_Joint(s3DRobot::Joint::ORIENTATION_Y, 0.0);
+    robot_1.add_Link(s3D(0.0, 0.0, -4.0));
+
+    s3D origin_1(0.0, 0.0, 0.0);
+    s3D position_1(2.0, 0.0, 10.0);
+    s3D end_1;
+      
+    origin_1.to_Screen();
+    
+    for (sInt_32 d = 0; d <= 180; d += 10)
+    {
+	robot_1.Joints[2]->rotation = sDEG_2_RAD(d);
+	robot_1.calc_EndPosition(robot_1.base_joint, origin_1, end_1);	
+	end_1.to_Screen();
+    }
+
+    robot_1.to_Screen();
+
+    printf("Optimizing...\n");
+    sDouble rotation_1;    
+    robot_1.optimize_JointRotation(robot_1.Joints[1], origin_1, position_1, rotation_1);
+    
+    printf("Optimized rotation: %.3f\n", rotation_1);
+
+    robot_1.optimize_RobotConfiguration(robot_1.Joints[0], origin_1, position_1);
+    robot_1.to_Screen();
+
+    sDouble yaw, pitch, roll;
+
+    sXYZ xyz_1(s3D(1.0, 0.0, 0.0),
+	       s3D(0.0, 1.0, 0.0),
+	       s3D(0.0, 0.0, 1.0));
+    
+    xyz_1.to_Screen();
+    xyz_1.rotate_AroundZ(0.1);
+    xyz_1.rotate_AroundY(0.2);    
+    xyz_1.rotate_AroundX(0.3);
+    xyz_1.to_Screen();    
+    
+    xyz_1.calc_PrincipalAxes(yaw, pitch, roll);    
+    
+    printf("yaw:%.3f, pitch:%.3f, roll:%.3f\n", yaw, pitch, roll);
+
+//    robot_1.attach_Constraint(robot_1.Joints[3], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, 0.0));
+    robot_1.attach_Constraint(robot_1.Joints[3], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, M_PI / 2));
+
+    robot_1.attach_Limiter(robot_1.Joints[0], s3DRobot::Limiter(-0.4 * M_PI, 0.4 * M_PI));
+    robot_1.attach_Limiter(robot_1.Joints[1], s3DRobot::Limiter(-0.5 * M_PI, 0.5 * M_PI));
+    robot_1.attach_Limiter(robot_1.Joints[2], s3DRobot::Limiter(-0.5 * M_PI, 0.5 * M_PI));
+    robot_1.attach_Limiter(robot_1.Joints[3], s3DRobot::Limiter(-0.5 * M_PI, 0.5 * M_PI));
+
+    robot_1.optimize_ConstrainedRobotConfiguration(robot_1.Joints[0], origin_1, position_1);
+    robot_1.to_Screen();    
+    
+    printf("Testing basic 5 ... finished\n");
+    
+    return sRESULT_SUCCESS;
+}
    
 
 }  // namespace rrOST
@@ -345,9 +416,16 @@ int main(int sUNUSED(argc), const char **sUNUSED(argv))
 	return result;
     } 
     */
+    /*
     if (sFAILED(result = test_basic_4()))
     {
 	printf("Test basic 4 failed (error:%d).\n", result);
+	return result;
+    } 
+    */
+    if (sFAILED(result = test_basic_5_RR1_rev1()))
+    {
+	printf("Test basic 5 failed (error:%d).\n", result);
 	return result;
     }     
     
