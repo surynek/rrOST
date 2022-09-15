@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-053_noair                              */
+/*                             rrOST 0-056_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.h / 0-053_noair                                                      */
+/* robot.h / 0-056_noair                                                      */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -312,8 +312,8 @@ namespace rrOST
     {
     public:
 	const sDouble POSITION_OPTIMIZATION_WEIGHT   = 1.0;
-	const sDouble CONSTRAINT_OPTIMIZATION_WEIGHT = 1.0;
-	const sDouble LIMITER_OPTIMIZATION_WEIGHT    = 8.0;
+	const sDouble CONSTRAINT_OPTIMIZATION_WEIGHT = 32.0;
+	const sDouble LIMITER_OPTIMIZATION_WEIGHT    = 64.0;
 	    
     public:		
 	struct Link
@@ -490,6 +490,7 @@ namespace rrOST
 
 	sDouble calc_LimiterViolation(void) const;
 	sDouble calc_LimiterViolation(const Joint *joint) const;
+	bool limit_JointRotation(Joint *joint);	
 
 	sDouble calc_ConstrainedPositionDifference(const s3D &origin, const s3D &position) const;
 	sDouble calc_ConstrainedJointRotationDerivative(Joint *joint, const s3D &origin, const s3D &position);

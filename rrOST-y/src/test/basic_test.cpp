@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-053_noair                              */
+/*                             rrOST 0-056_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* basic_test.cpp / 0-053_noair                                               */
+/* basic_test.cpp / 0-056_noair                                               */
 /*----------------------------------------------------------------------------*/
 //
 // Basic initial test.
@@ -337,7 +337,8 @@ int test_basic_5_RR1_rev1(void)
 
     position_end.to_Screen();
     
-    s3D position_1(-28.0, 5.0, 20.0);
+//    s3D position_1(-26.5, 5.0, 25.5);
+    s3D position_1(-32.5, 5.0, 25.5);    
     s3D end_1;
       
     origin_1.to_Screen();
@@ -356,26 +357,74 @@ int test_basic_5_RR1_rev1(void)
     robot_1.optimize_JointRotation(robot_1.Joints[1], origin_1, position_1, rotation_1);
     
     printf("Optimized rotation: %.3f\n", rotation_1);
-
+/*
     robot_1.optimize_RobotConfiguration(robot_1.Joints[0], origin_1, position_1);
     robot_1.to_Screen();
-    
+*/
+    /* True limits
     robot_1.attach_Limiter(robot_1.Joints[0], s3DRobot::Limiter(sDEG_2_RAD(-58.0), sDEG_2_RAD(58.0)));    
     robot_1.attach_Limiter(robot_1.Joints[1], s3DRobot::Limiter(sDEG_2_RAD(-27.0), sDEG_2_RAD(22.0)));    
     robot_1.attach_Limiter(robot_1.Joints[2], s3DRobot::Limiter(sDEG_2_RAD(-75.0), sDEG_2_RAD(75.0)));
     robot_1.attach_Limiter(robot_1.Joints[3], s3DRobot::Limiter(sDEG_2_RAD(-135.0), sDEG_2_RAD(135.0)));
     robot_1.attach_Limiter(robot_1.Joints[4], s3DRobot::Limiter(sDEG_2_RAD(-106.0), sDEG_2_RAD(106.0)));
     robot_1.attach_Limiter(robot_1.Joints[5], s3DRobot::Limiter(sDEG_2_RAD(-109.0), sDEG_2_RAD(109.0)));
-
-//    robot_1.attach_Constraint(robot_1.Joints[4], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, 0.0));
-//    robot_1.attach_Constraint(robot_1.Joints[4], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_ROLL, 0.0));    
+    */
+    /* Safe limits */
+    robot_1.attach_Limiter(robot_1.Joints[0], s3DRobot::Limiter(sDEG_2_RAD(-50.0), sDEG_2_RAD(50.0)));    
+    robot_1.attach_Limiter(robot_1.Joints[1], s3DRobot::Limiter(sDEG_2_RAD(-20.0), sDEG_2_RAD(20.0)));    
+    robot_1.attach_Limiter(robot_1.Joints[2], s3DRobot::Limiter(sDEG_2_RAD(-70.0), sDEG_2_RAD(70.0)));
+    robot_1.attach_Limiter(robot_1.Joints[3], s3DRobot::Limiter(sDEG_2_RAD(-120.0), sDEG_2_RAD(120.0)));
+    robot_1.attach_Limiter(robot_1.Joints[4], s3DRobot::Limiter(sDEG_2_RAD(-100.0), sDEG_2_RAD(100.0)));
+    robot_1.attach_Limiter(robot_1.Joints[5], s3DRobot::Limiter(sDEG_2_RAD(-100.0), sDEG_2_RAD(100.0)));
+    
+//    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, sDEG_2_RAD(-90)));
+//    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_YAW, 0.0));
+//    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_ROLL, 0.0));        
 
     robot_1.optimize_ConstrainedRobotConfiguration(robot_1.Joints[0], origin_1, position_1);
-    robot_1.to_Screen();    
+    robot_1.to_Screen();
+
+    print_RR1_rev1_steps(robot_1);
     
     printf("Testing basic 5 ... finished\n");
     
     return sRESULT_SUCCESS;
+}
+
+
+void print_RR1_rev1_steps(const s3DRobot &robot)
+{
+    sASSERT(robot.Joints.size() == 6);
+
+    printf("-----------------------------------------\n");    
+    printf("RR1 rev.1: Real Robot One, revision 1\n");
+    printf("inverse kinematics computed configuration\n");    
+    printf("=========================================\n");
+    
+    sDouble angle_J_S1 = sRAD_2_DEG(robot.Joints[0]->rotation);
+    sInt_32 steps_J_S1 = angle_J_S1 * 14;
+    printf("Joint [J-S1]: %d (%.3f°)\n", steps_J_S1, angle_J_S1);
+
+    sDouble angle_J_S2 = sRAD_2_DEG(robot.Joints[1]->rotation);
+    sInt_32 steps_J_S2 = angle_J_S2 * 14;
+    printf("Joint [J-S2]: %d (%.3f°)\n", steps_J_S2, angle_J_S2);
+
+    sDouble angle_J_E1 = sRAD_2_DEG(robot.Joints[2]->rotation);
+    sInt_32 steps_J_E1 = angle_J_E1 * 27;
+    printf("Joint [J-E1]: %d (%.3f°)\n", steps_J_E1, angle_J_E1);
+
+    sDouble angle_J_E2 = sRAD_2_DEG(robot.Joints[3]->rotation);
+    sInt_32 steps_J_E2 = -angle_J_E2 * 42;
+    printf("Joint [J-E2]: %d (%.3f°)\n", steps_J_E2, angle_J_E2);
+
+    sDouble angle_J_W1 = sRAD_2_DEG(robot.Joints[4]->rotation);
+    sInt_32 steps_J_W1 = -angle_J_W1 * 77;
+    printf("Joint [J-W1]: %d (%.3f°)\n", steps_J_W1, angle_J_W1);
+
+    sDouble angle_J_W2 = sRAD_2_DEG(robot.Joints[5]->rotation);
+    sInt_32 steps_J_W2 = -angle_J_W2 * 43.5;
+    printf("Joint [J-W2]: %d (%.3f°)\n", steps_J_W2, angle_J_W2);
+    printf("-----------------------------------------\n");
 }
    
 

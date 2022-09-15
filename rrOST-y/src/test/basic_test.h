@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-053_noair                              */
+/*                             rrOST 0-056_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* basic_test.h / 0-053_noair                                                 */
+/* basic_test.h / 0-056_noair                                                 */
 /*----------------------------------------------------------------------------*/
 //
 // Basic initial test.
@@ -36,6 +36,8 @@ int test_basic_3(void);
 int test_basic_4(void);
 int test_basic_5(void);
 int test_basic_5_RR1_rev1(void);
+
+void print_RR1_rev1_steps(const s3DRobot &robot);
 
 
 

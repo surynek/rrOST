@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-053_noair                              */
+/*                             rrOST 0-056_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.cpp / 0-053_noair                                                    */
+/* robot.cpp / 0-056_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -1303,6 +1303,7 @@ namespace rrOST
 	    {
 		sDouble yaw, pitch, roll;	    
 		xyz.calc_PrincipalAxes(yaw, pitch, roll);
+		printf("yaw: %.3f, pitch: %.3f, roll: %.3f\n", yaw, pitch, roll);
 
 		for (Constraints_vector::const_iterator constraint = joint->Constraints.begin(); constraint != joint->Constraints.end(); ++constraint)
 		{
@@ -1376,11 +1377,35 @@ namespace rrOST
     }
 
 
+    bool s3DRobot::limit_JointRotation(Joint *joint)
+    {
+	for (Limiters_vector::const_iterator limiter = joint->Limiters.begin(); limiter != joint->Limiters.end(); ++limiter)
+	{
+	    if (joint->rotation > (*limiter)->rotation_high)
+	    {
+		joint->rotation = (*limiter)->rotation_high;
+		return true;
+	    }
+	    else
+	    {
+		if (joint->rotation < (*limiter)->rotation_low)
+		{
+		    joint->rotation = (*limiter)->rotation_low;
+		    return true;		    
+		}
+	    }
+	}
+	return false;
+    }    
+
+
     sDouble s3DRobot::calc_ConstrainedPositionDifference(const s3D &origin, const s3D &position) const
     {
 	sDouble pos_diff = calc_PositionDifference(origin, position);
 	sDouble deviation = calc_ConstraintDeviation();
 	sDouble violation =  calc_LimiterViolation();
+
+	printf("po: %.6f, co: %.6f, vi: %.6f\n", pos_diff, deviation, violation);
 
 	return (  POSITION_OPTIMIZATION_WEIGHT * pos_diff
 		+ CONSTRAINT_OPTIMIZATION_WEIGHT * deviation
@@ -1429,18 +1454,24 @@ namespace rrOST
 	    drot = calc_ConstrainedJointRotationDerivative(joint, origin, position);
 	    ddrot = calc_ConstrainedJointRotation2Derivative(joint, origin, position);
 
-	    printf("%.10f,%.3f,%d <-- %f\n", drot, ddrot, i, joint->rotation);
+	    printf("alpha B:%.10f,%.3f,%d <-- %f\n", drot, ddrot, i, joint->rotation);
 	    
 	    if (sABS(drot) > s_PRECISION)
 	    {
-		joint->rotation = joint->rotation - (drot / ddrot);		
+		joint->rotation = joint->rotation - (drot / ddrot);
+
+		if (limit_JointRotation(joint))
+		{
+		    drot = 0.0;
+		    break;
+		}
 	    }
 	    else
 	    {
 		break;
 	    }
 	}
-	joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));	
+	//joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));	
 	
 	if (sABS(drot) <= s_PRECISION)
 	{
@@ -1468,7 +1499,7 @@ namespace rrOST
 	    drot = calc_ConstrainedJointRotationDerivative(joint, origin, position);
 	    ddrot = calc_ConstrainedJointRotation2Derivative(joint, origin, position);
 
-	    printf("%.3f,%.3f,%d <-- %f\n", drot, ddrot, i, joint->rotation);
+	    printf("alpha: %.3f,%.3f,%d <-- %f\n", drot, ddrot, i, joint->rotation);
 	    
 	    if (sABS(drot) > s_PRECISION)
 	    {
@@ -1558,6 +1589,10 @@ namespace rrOST
 		    {
 			restore_RobotConfiguration(configuration);
 			break;
+		    }
+		    else
+		    {
+			printf("Joint optimized O.K.\n");
 		    }
 		    joint = joint->next;
 		}
