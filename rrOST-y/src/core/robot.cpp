@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-051_noair                              */
+/*                             rrOST 0-053_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.cpp / 0-051_noair                                                    */
+/* robot.cpp / 0-053_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -795,7 +795,7 @@ namespace rrOST
     
     void s3DRobot::Link::to_Stream(FILE *fw, const sString &indent) const
     {
-	fprintf(fw, "%sLink: (end.x = %.3f, end.y = %.3f)\n", indent.c_str(), end.x, end.y);
+	fprintf(fw, "%sLink: (end.x = %.3f, end.y = %.3f, end.z = %.3f)\n", indent.c_str(), end.x, end.y, end.z);
     }
 
 
@@ -1187,7 +1187,7 @@ namespace rrOST
 	sDouble drot, ddrot;
 	
 	for (sInt_32 i = 0; i < MAX_OPTIMIZATION_ITERATIONS; ++i)
-	{
+	{	    
 	    drot = calc_JointRotationDerivative(joint, origin, position);
 	    ddrot = calc_JointRotation2Derivative(joint, origin, position);
 
@@ -1424,6 +1424,8 @@ namespace rrOST
 	
 	for (sInt_32 i = 0; i < MAX_OPTIMIZATION_ITERATIONS; ++i)
 	{
+	    joint->to_Screen();
+	    
 	    drot = calc_ConstrainedJointRotationDerivative(joint, origin, position);
 	    ddrot = calc_ConstrainedJointRotation2Derivative(joint, origin, position);
 
@@ -1438,8 +1440,8 @@ namespace rrOST
 		break;
 	    }
 	}
-	//joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));	
-
+	joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));	
+	
 	if (sABS(drot) <= s_PRECISION)
 	{
 	    s3D end;
@@ -1477,7 +1479,7 @@ namespace rrOST
 		break;
 	    }
 	}
-	//joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));
+	joint->rotation -= sSGN(joint->rotation) * 2 * M_PI * floor(joint->rotation / (2 * M_PI));
 	rotation = joint->rotation;
 	
 	joint->rotation = rotation_save;
@@ -1513,7 +1515,7 @@ namespace rrOST
 		    if (!optimize_JointRotation(joint, origin, position))
 		    {
 			restore_RobotConfiguration(configuration);
-			return false;
+			break;
 		    }
 		    joint = joint->next;
 		}
@@ -1555,20 +1557,21 @@ namespace rrOST
 		    if (!optimize_ConstrainedJointRotation(joint, origin, position))
 		    {
 			restore_RobotConfiguration(configuration);
-			return false;
+			break;
 		    }
 		    joint = joint->next;
 		}
-		sDouble diff = calc_PositionDifference(origin, position);
-		sDouble devi = calc_ConstraintDeviation();
-		printf("Diff:%.10f, devi:%.10f\n", diff, devi);
+		//sDouble diff = calc_PositionDifference(origin, position);
+		//sDouble devi = calc_ConstraintDeviation();
+		sDouble diff = calc_ConstrainedPositionDifference(origin, position);
+		printf("Diff:%.10f\n", diff);
 	    
 		if (diff < s_PRECISION)
 		{
 		    s3D final_end;
 		    calc_EndPosition(base_joint, origin, final_end);
 		    printf("Final end position:\n");
-		    final_end.to_Screen();		    
+		    final_end.to_Screen();
 		    printf("Optimal configuration found.\n");
 		    return true;
 		}
