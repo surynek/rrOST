@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-056_noair                              */
+/*                             rrOST 0-058_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* compile.h / 0-056_noair                                                    */
+/* compile.h / 0-058_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Compilation configuration file for rrOST package - debugging variant.

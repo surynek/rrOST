@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-056_noair                              */
+/*                             rrOST 0-058_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* robot.cpp / 0-056_noair                                                    */
+/* robot.cpp / 0-058_noair                                                    */
 /*----------------------------------------------------------------------------*/
 //
 // Robot (model) related data structures and functions.
@@ -1303,6 +1303,7 @@ namespace rrOST
 	    {
 		sDouble yaw, pitch, roll;	    
 		xyz.calc_PrincipalAxes(yaw, pitch, roll);
+		xyz.to_Screen();
 		printf("yaw: %.3f, pitch: %.3f, roll: %.3f\n", yaw, pitch, roll);
 
 		for (Constraints_vector::const_iterator constraint = joint->Constraints.begin(); constraint != joint->Constraints.end(); ++constraint)
@@ -1601,7 +1602,7 @@ namespace rrOST
 		sDouble diff = calc_ConstrainedPositionDifference(origin, position);
 		printf("Diff:%.10f\n", diff);
 	    
-		if (diff < s_PRECISION)
+		if (diff < 0.0001)//s_PRECISION)
 		{
 		    s3D final_end;
 		    calc_EndPosition(base_joint, origin, final_end);

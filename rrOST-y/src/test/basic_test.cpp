@@ -1,7 +1,7 @@
 /*============================================================================*/
 /*                                                                            */
 /*                                                                            */
-/*                             rrOST 0-056_noair                              */
+/*                             rrOST 0-058_noair                              */
 /*                                                                            */
 /*                  (C) Copyright 2021 - 2022 Pavel Surynek                   */
 /*                                                                            */
@@ -9,7 +9,7 @@
 /*       http://users.fit.cvut.cz/surynek | <pavel.surynek@fit.cvut.cz>       */
 /*                                                                            */
 /*============================================================================*/
-/* basic_test.cpp / 0-056_noair                                               */
+/* basic_test.cpp / 0-058_noair                                               */
 /*----------------------------------------------------------------------------*/
 //
 // Basic initial test.
@@ -337,8 +337,8 @@ int test_basic_5_RR1_rev1(void)
 
     position_end.to_Screen();
     
-//    s3D position_1(-26.5, 5.0, 25.5);
-    s3D position_1(-32.5, 5.0, 25.5);    
+    s3D position_1(-26.5, 5.0, 25.5);
+//    s3D position_1(-32.5, 5.0, 25.5);    
     s3D end_1;
       
     origin_1.to_Screen();
@@ -366,7 +366,7 @@ int test_basic_5_RR1_rev1(void)
     robot_1.attach_Limiter(robot_1.Joints[1], s3DRobot::Limiter(sDEG_2_RAD(-27.0), sDEG_2_RAD(22.0)));    
     robot_1.attach_Limiter(robot_1.Joints[2], s3DRobot::Limiter(sDEG_2_RAD(-75.0), sDEG_2_RAD(75.0)));
     robot_1.attach_Limiter(robot_1.Joints[3], s3DRobot::Limiter(sDEG_2_RAD(-135.0), sDEG_2_RAD(135.0)));
-    robot_1.attach_Limiter(robot_1.Joints[4], s3DRobot::Limiter(sDEG_2_RAD(-106.0), sDEG_2_RAD(106.0)));
+    robot_1.attach_Limiter(robot_1.Joints[4], s3DRobot::Limiter(sDEG_2_RAD(-106.0), sDEG_2_RAD(26.0)));
     robot_1.attach_Limiter(robot_1.Joints[5], s3DRobot::Limiter(sDEG_2_RAD(-109.0), sDEG_2_RAD(109.0)));
     */
     /* Safe limits */
@@ -374,12 +374,12 @@ int test_basic_5_RR1_rev1(void)
     robot_1.attach_Limiter(robot_1.Joints[1], s3DRobot::Limiter(sDEG_2_RAD(-20.0), sDEG_2_RAD(20.0)));    
     robot_1.attach_Limiter(robot_1.Joints[2], s3DRobot::Limiter(sDEG_2_RAD(-70.0), sDEG_2_RAD(70.0)));
     robot_1.attach_Limiter(robot_1.Joints[3], s3DRobot::Limiter(sDEG_2_RAD(-120.0), sDEG_2_RAD(120.0)));
-    robot_1.attach_Limiter(robot_1.Joints[4], s3DRobot::Limiter(sDEG_2_RAD(-100.0), sDEG_2_RAD(100.0)));
+    robot_1.attach_Limiter(robot_1.Joints[4], s3DRobot::Limiter(sDEG_2_RAD(-100.0), sDEG_2_RAD(20.0)));
     robot_1.attach_Limiter(robot_1.Joints[5], s3DRobot::Limiter(sDEG_2_RAD(-100.0), sDEG_2_RAD(100.0)));
     
-//    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, sDEG_2_RAD(-90)));
-//    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_YAW, 0.0));
-//    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_ROLL, 0.0));        
+    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_PITCH, sDEG_2_RAD(0.0)));
+    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_YAW, sDEG_2_RAD(0.0)));
+    robot_1.attach_Constraint(robot_1.Joints[5], s3DRobot::Constraint(s3DRobot::Constraint::AXIS_ROLL, sDEG_2_RAD(0.0)));        
 
     robot_1.optimize_ConstrainedRobotConfiguration(robot_1.Joints[0], origin_1, position_1);
     robot_1.to_Screen();
